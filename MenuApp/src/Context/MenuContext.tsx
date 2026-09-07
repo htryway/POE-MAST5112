@@ -37,6 +37,11 @@ const DEFAULT_ITEMS: MenuItem[] = [
   { id: '3', name: 'Malva Pudding', description: 'Warm sponge pudding with caramel sauce and custard.', course: 'Dessert', price: '65.00' },
 ];
 
+// Generates a unique ID even if two items are added in the same millisecond.
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 export function MenuProvider({ children }: { children: ReactNode }) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [deletedItems, setDeletedItems] = useState<DeletedMenuItem[]>([]);
@@ -79,7 +84,7 @@ export function MenuProvider({ children }: { children: ReactNode }) {
   }, [deletedItems, isLoaded]);
 
   const addItem = (item: Omit<MenuItem, 'id'>) => {
-    setMenuItems((prev) => [...prev, { ...item, id: Date.now().toString() }]);
+    setMenuItems((prev) => [...prev, { ...item, id: generateId() }]);
   };
 
   const updateItem = (updated: MenuItem) => {
@@ -128,4 +133,3 @@ export function useMenu() {
   if (!context) throw new Error('useMenu must be used within a MenuProvider');
   return context;
 }
-

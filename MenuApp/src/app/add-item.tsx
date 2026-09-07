@@ -15,15 +15,22 @@ export default function AddItemScreen() {
   const [course, setCourse] = useState<Course>('Starter');
   const [price, setPrice] = useState('');
 
-  const handleSave = () => {
-    if (!name.trim() || !price.trim()) {
-      Alert.alert('Missing information', 'Please enter at least a dish name and price.');
-      return;
-    }
-    addItem({ name, description, course, price });
-    Alert.alert('Saved', `${name} was added to the menu.`);
-    router.back();
-  };
+ const handleSave = () => {
+  const priceNum = parseFloat(price);
+
+  if (!name.trim()) {
+    Alert.alert('Missing information', 'Please enter a dish name.');
+    return;
+  }
+  if (!price.trim() || isNaN(priceNum) || priceNum <= 0) {
+    Alert.alert('Invalid price', 'Please enter a valid price greater than 0.');
+    return;
+  }
+
+  addItem({ name, description, course, price });
+  Alert.alert('Saved', `${name} was added to the menu.`);
+  router.back();
+};
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
