@@ -3,8 +3,8 @@ import ConfirmModal from '@/components/ConfirmModal';
 import { menuTheme } from '@/constants/menuTheme';
 import { Picker } from '@react-native-picker/picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EditItemScreen() {
@@ -19,6 +19,7 @@ export default function EditItemScreen() {
   const [course, setCourse] = useState<Course>(existingItem?.course ?? 'Starter');
   const [price, setPrice] = useState(existingItem?.price ?? '');
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   if (!existingItem) {
     return (
@@ -29,11 +30,23 @@ export default function EditItemScreen() {
   }
 
   const handleSave = () => {
-    if (!name.trim() || !price.trim()) {
-      Alert.alert('Missing information', 'Please enter at least a dish name and price.');
+    const priceNum = parseFloat(price);
+
+    if (!name.trim()) {
+      Alert.alert('Missing information', 'Please enter a dish name.');
       return;
     }
-    updateItem({ id: existingItem.id, name, description, course, price });
+    if (!description.trim()) {
+      Alert.alert('Missing information', 'Please enter a description for the dish.');
+      return;
+    }
+    if (!price.trim() || isNaN(priceNum) || priceNum <= 0) {
+      Alert.alert('Invalid price', 'Please enter a valid price greater than 0.');
+      return;
+    }
+
+    updateItem({ id: existingItem.id, name: name.trim(), description: description.trim(), course, price });
+    Alert.alert('Updated', `${name.trim()} was updated.`);
     router.back();
   };
 
@@ -45,42 +58,66 @@ export default function EditItemScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Text style={styles.heading}>Edit Dish</Text>
-        <Text style={styles.subheading}>Update the details below, or remove this dish from the menu.</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+      >
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={{ padding: 20, paddingBottom: 250 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.heading}>Edit Dish</Text>
+          <Text style={styles.subheading}>Update the details below, or remove this dish from the menu.</Text>
 
-        <Text style={styles.label}>Dish Name</Text>
-        <TextInput style={styles.input} value={name} onChangeText={setName} />
+          <Text style={styles.label}>Dish Name</Text>
+          <TextInput style={styles.input} value={name} onChangeText={setName} />
 
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, styles.multiline]}
-          value={description}
-          onChangeText={setDescription}
-          multiline
-          numberOfLines={4}
-        />
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.multiline]}
+            value={description}
+            onChangeText={setDescription}
+            onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
+            multiline
+            numberOfLines={4}
+          />
 
-        <Text style={styles.label}>Course</Text>
-        <View style={styles.pickerWrapper}>
-          <Picker selectedValue={course} onValueChange={(v) => setCourse(v)}>
-            <Picker.Item label="Starter" value="Starter" />
-            <Picker.Item label="Main Course" value="Main Course" />
-            <Picker.Item label="Dessert" value="Dessert" />
-          </Picker>
-        </View>
+          <Text style={styles.label}>Course</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={course}
+              onValueChange={(v) => setCourse(v)}
+              style={{ color: menuTheme.charcoal }}
+              dropdownIconColor={menuTheme.charcoal}
+              mode="dropdown"
+            >
+              <Picker.Item label="Starter" value="Starter" />
+              <Picker.Item label="Main Course" value="Main Course" />
+              <Picker.Item label="Dessert" value="Dessert" />
+            </Picker>
+          </View>
 
-        <Text style={styles.label}>Price (R)</Text>
-        <TextInput style={styles.input} value={price} onChangeText={setPrice} keyboardType="numeric" />
+          <Text style={styles.label}>Price (R)</Text>
+          <TextInput
+            style={styles.input}
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="numeric"
+            onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
+          />
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save Changes</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+            <Text style={styles.saveButtonText}>Save Changes</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.deleteButton} onPress={() => setConfirmVisible(true)}>
-          <Text style={styles.deleteButtonText}>Delete Dish</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity style={styles.deleteButton} onPress={() => setConfirmVisible(true)}>
+            <Text style={styles.deleteButtonText}>Delete Dish</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <ConfirmModal
         visible={confirmVisible}
@@ -124,4 +161,3 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: { color: menuTheme.danger, fontWeight: '700', fontSize: 16 },
 });
-

@@ -2,11 +2,12 @@ import { courseStyle, menuTheme } from '@/constants/menuTheme';
 import { MenuItem, useMenu } from '@/Context/MenuContext';
 import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { menuItems, deletedItems } = useMenu();
+  const insets = useSafeAreaInsets();
 
   const renderItem = ({ item }: { item: MenuItem }) => {
     const badge = courseStyle[item.course];
@@ -46,13 +47,13 @@ export default function HomeScreen() {
         data={menuItems}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ padding: 16, paddingBottom: 110 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }}
         ListEmptyComponent={
           <Text style={styles.emptyText}>No menu items yet.{'\n'}Tap "Add Item" below to get started.</Text>
         }
       />
 
-      <View style={styles.buttonRow}>
+      <View style={[styles.buttonRow, { bottom: insets.bottom + 16 }]}>
         <TouchableOpacity style={styles.addButton} onPress={() => router.push('/add-item')}>
           <Text style={styles.addButtonText}>+ Add Item</Text>
         </TouchableOpacity>
@@ -101,7 +102,6 @@ const styles = StyleSheet.create({
   emptyText: { textAlign: 'center', color: menuTheme.subtext, marginTop: 60, fontSize: 15, lineHeight: 22 },
   buttonRow: {
     position: 'absolute',
-    bottom: 20,
     left: 16,
     right: 16,
     flexDirection: 'row',

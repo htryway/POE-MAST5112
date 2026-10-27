@@ -25,6 +25,18 @@ export default function OverviewScreen() {
     return counts;
   }, [menuItems]);
 
+  const averagePrice = useMemo(() => {
+    if (menuItems.length === 0) return 0;
+    const total = menuItems.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+    return total / menuItems.length;
+  }, [menuItems]);
+
+  const hasActiveFilters = search.trim().length > 0 || activeCourse !== 'All';
+  const clearFilters = () => {
+    setSearch('');
+    setActiveCourse('All');
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={{ padding: 20, paddingBottom: 0 }}>
@@ -48,6 +60,11 @@ export default function OverviewScreen() {
               <Text style={[styles.filterChipText, activeCourse === c && styles.filterChipTextActive]}>{c}</Text>
             </TouchableOpacity>
           ))}
+          {hasActiveFilters && (
+            <TouchableOpacity style={styles.clearChip} onPress={clearFilters}>
+              <Text style={styles.clearChipText}>Clear ✕</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.statsBox}>
@@ -70,6 +87,11 @@ export default function OverviewScreen() {
             <Text style={styles.statNumber}>{menuItems.length}</Text>
             <Text style={styles.statLabel}>Total</Text>
           </View>
+        </View>
+
+        <View style={styles.avgBox}>
+          <Text style={styles.avgLabel}>Average Price</Text>
+          <Text style={styles.avgValue}>R{averagePrice.toFixed(2)}</Text>
         </View>
       </View>
 
@@ -116,6 +138,22 @@ const styles = StyleSheet.create({
   statDivider: { width: 1, backgroundColor: menuTheme.border },
   statNumber: { fontSize: 18, fontWeight: '800', color: menuTheme.primary },
   statLabel: { fontSize: 11, color: menuTheme.subtext, marginTop: 2 },
+  clearChip: { paddingVertical: 7, paddingHorizontal: 14, borderRadius: 20, backgroundColor: menuTheme.danger },
+  clearChipText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  avgBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: menuTheme.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: menuTheme.border,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  avgLabel: { fontSize: 13, fontWeight: '700', color: menuTheme.charcoal },
+  avgValue: { fontSize: 16, fontWeight: '800', color: menuTheme.primary },
   card: { backgroundColor: menuTheme.surface, borderRadius: 10, padding: 13, marginBottom: 10, borderWidth: 1, borderColor: menuTheme.border },
   dishName: { fontSize: 15, fontWeight: '700', color: menuTheme.charcoal, marginBottom: 6 },
   courseBadge: { alignSelf: 'flex-start', borderRadius: 20, paddingVertical: 3, paddingHorizontal: 10 },

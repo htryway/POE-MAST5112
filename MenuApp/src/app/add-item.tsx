@@ -2,8 +2,8 @@ import { Course, useMenu } from '@/Context/MenuContext';
 import { menuTheme } from '@/constants/menuTheme';
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AddItemScreen() {
@@ -14,6 +14,7 @@ export default function AddItemScreen() {
   const [description, setDescription] = useState('');
   const [course, setCourse] = useState<Course>('Starter');
   const [price, setPrice] = useState('');
+  const scrollRef = useRef<ScrollView>(null);
 
  const handleSave = () => {
   const priceNum = parseFloat(price);
@@ -22,52 +23,82 @@ export default function AddItemScreen() {
     Alert.alert('Missing information', 'Please enter a dish name.');
     return;
   }
+  if (!description.trim()) {
+    Alert.alert('Missing information', 'Please enter a description for the dish.');
+    return;
+  }
   if (!price.trim() || isNaN(priceNum) || priceNum <= 0) {
     Alert.alert('Invalid price', 'Please enter a valid price greater than 0.');
     return;
   }
 
-  addItem({ name, description, course, price });
-  Alert.alert('Saved', `${name} was added to the menu.`);
+  addItem({ name: name.trim(), description: description.trim(), course, price });
+  Alert.alert('Saved', `${name.trim()} was added to the menu.`);
   router.back();
 };
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Text style={styles.heading}>New Dish</Text>
-        <Text style={styles.subheading}>Fill in the details below to add it to the menu.</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+      >
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={{ padding: 20, paddingBottom: 250 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.heading}>New Dish</Text>
+          <Text style={styles.subheading}>Fill in the details below to add it to the menu.</Text>
 
-        <Text style={styles.label}>Dish Name</Text>
-        <TextInput style={styles.input} placeholder="e.g. Bruschetta" placeholderTextColor={menuTheme.subtext} value={name} onChangeText={setName} />
+          <Text style={styles.label}>Dish Name</Text>
+          <TextInput style={styles.input} placeholder="e.g. Bruschetta" placeholderTextColor={menuTheme.subtext} value={name} onChangeText={setName} />
 
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, styles.multiline]}
-          placeholder="Describe the dish..."
-          placeholderTextColor={menuTheme.subtext}
-          value={description}
-          onChangeText={setDescription}
-          multiline
-          numberOfLines={4}
-        />
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.multiline]}
+            placeholder="Describe the dish..."
+            placeholderTextColor={menuTheme.subtext}
+            value={description}
+            onChangeText={setDescription}
+            onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
+            multiline
+            numberOfLines={4}
+          />
 
-        <Text style={styles.label}>Course</Text>
-        <View style={styles.pickerWrapper}>
-          <Picker selectedValue={course} onValueChange={(v) => setCourse(v)}>
-            <Picker.Item label="Starter" value="Starter" />
-            <Picker.Item label="Main Course" value="Main Course" />
-            <Picker.Item label="Dessert" value="Dessert" />
-          </Picker>
-        </View>
+          <Text style={styles.label}>Course</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={course}
+              onValueChange={(v) => setCourse(v)}
+              style={{ color: menuTheme.charcoal }}
+              dropdownIconColor={menuTheme.charcoal}
+              mode="dropdown"
+            >
+              <Picker.Item label="Starter" value="Starter" />
+              <Picker.Item label="Main Course" value="Main Course" />
+              <Picker.Item label="Dessert" value="Dessert" />
+            </Picker>
+          </View>
 
-        <Text style={styles.label}>Price (R)</Text>
-        <TextInput style={styles.input} placeholder="e.g. 85.00" placeholderTextColor={menuTheme.subtext} value={price} onChangeText={setPrice} keyboardType="numeric" />
+          <Text style={styles.label}>Price (R)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 85.00"
+            placeholderTextColor={menuTheme.subtext}
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="numeric"
+            onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
+          />
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save Item</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+            <Text style={styles.saveButtonText}>Save Item</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
